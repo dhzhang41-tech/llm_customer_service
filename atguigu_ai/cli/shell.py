@@ -183,7 +183,7 @@ class InteractiveShell:
         else:
             logging.getLogger().setLevel(logging.DEBUG)
             click.echo("调试模式: 开启")
-    
+
     async def _handle_message(self, text: str) -> None:
         """处理用户消息。"""
         try:
@@ -192,32 +192,36 @@ class InteractiveShell:
                 message=text,
                 sender_id=self.sender_id,
             )
-            
+
             # 显示响应
+            if not isinstance(responses, list):
+                responses = [responses]
+
             for response in responses:
                 if isinstance(response, dict):
                     text = response.get("text", "")
                     if text:
                         click.echo(f"Bot: {text}")
-                    
-                    # 显示按钮
                     buttons = response.get("buttons", [])
                     if buttons:
                         click.echo("  选项:")
                         for i, btn in enumerate(buttons, 1):
                             title = btn.get("title", "")
                             click.echo(f"    [{i}] {title}")
-                    
-                    # 显示自定义数据
                     custom = response.get("custom")
                     if custom:
                         click.echo(f"  (自定义: {custom})")
+                elif hasattr(response, 'messages'):
+                    for msg in response.messages:
+                        msg_text = msg.get('text', '')
+                        if msg_text:
+                            click.echo(f"Bot: {msg_text}")
                 else:
                     click.echo(f"Bot: {response}")
-            
+
             if not responses:
                 click.echo("Bot: (无响应)")
-                
+
         except Exception as e:
             click.echo(f"处理消息失败: {e}", err=True)
             logger.exception("Message handling error")
